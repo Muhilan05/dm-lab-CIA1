@@ -1,0 +1,470 @@
+LAB 1
+
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+iris = load_iris()
+iris_df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
+iris_df['species'] = iris.target
+iris_df.head()
+iris_df.describe()
+sns.set(style="whitegrid") # Set a clean grid style for better visualization
+pair_plot = sns.pairplot(
+iris_df,
+hue="species", # Use the species column to color the data points
+diag_kind="kde", # Use Kernel Density Estimation for diagonal plots
+palette="Set2", # Use a pleasant color palette
+corner=True # Show only the lower triangle of the pair plot to reduce redundancy
+)
+pair_plot.fig.suptitle(
+"Pair Plot of Iris Dataset (Visualizing Potential Outliers & Noise)",
+y=1.02, fontsize=16
+) # Add a title to the plot
+pair_plot.fig.tight_layout()
+plt.show()
+plt.figure(figsize = (5, 5))
+x = iris_df["sepal length (cm)"]
+plt.hist(x, bins = 20, color = "green")
+plt.title("Sepal Length in cm")
+plt.xlabel("Sepal_Length_cm")
+plt.ylabel("Count")
+plt.figure(figsize = (5,5))
+x = iris_df["sepal width (cm)"]
+plt.hist(x, bins = 20, color = "green")
+plt.title("Sepal Width in cm")
+plt.xlabel("Sepal_Width_cm")
+plt.ylabel("Count")
+plt.show()
+plt.figure(figsize = (5,5))
+x = iris_df["petal length (cm)"]
+plt.hist(x, bins = 20, color = "green")
+plt.title("Petal Length in cm")
+plt.xlabel("Petal_Length_cm")
+plt.ylabel("Count")
+plt.show()
+plt.figure(figsize = (5, 5))
+x = iris_df["petal width (cm)"]
+plt.hist(x, bins = 20, color = "green")
+plt.title("Petal Width in cm")
+plt.xlabel("Petal_Width_cm")
+plt.ylabel("Count")
+plt.show()
+plt.figure(figsize = (10, 7))
+iris_df.boxplot()
+iso_forest = IsolationForest(n_estimators=100,
+
+contamination=0.05,
+random_state=42)
+iso_forest.fit(iris_df.iloc[:, :-1])
+
+iris_df['anomaly_score'] = iso_forest.predict(iris_df.iloc[:, :-1])
+
+outliers = iris_df[iris_df['anomaly_score'] == -1]
+normal_points = iris_df[iris_df['anomaly_score'] == 1]
+
+print(f"Number of outliers detected: {len(outliers)}")
+print("Outliers:\n", outliers)
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.pairplot(
+iris_df,
+hue="anomaly_score",
+diag_kind="kde",
+palette={1: "blue", -1: "red"},
+corner=True
+)
+plt.suptitle("Pair Plot Highlighting Outliers (Red) Detected by Isolation Forest", y=1.02)
+plt.show()
+
+LAB 2
+
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics.pairwise import euclidean_distances
+
+file_path = '/content/Fuel_Consumption_2000-2022.csv'
+data = pd.read_csv(file_path)
+
+print(data.columns)
+
+features = ['ENGINE SIZE', 'CYLINDERS', 'FUEL CONSUMPTION', 'HWY (L/100 km)',
+'COMB (L/100 km)', 'EMISSIONS']
+data_numeric = data[features]
+
+missing_features = [feature for feature in features if feature not in data.colum
+if missing_features:
+print(f"Missing columns in dataset: {missing_features}")
+else:
+data_numeric = data[features]
+print("All features found. Proceeding with analysis.")
+
+data_numeric.head()
+
+data_numeric.info()
+
+data_numeric.describe()
+
+sns.pairplot(data_numeric, diag_kind='kde', kind='scatter')
+plt.suptitle('Pairwise Relationships Between Standardized Features', y=1.02)
+plt.show()
+
+scaler = StandardScaler()
+data_scaled = scaler.fit_transform(data_numeric)
+
+data_scaled_df = pd.DataFrame(data_scaled, columns=features)
+
+data_scaled_df.describe()
+
+data_scaled_df.info()
+
+correlation_matrix = data_scaled_df.corr()
+
+plt.figure(figsize=(8, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Between Features (Standardized)')
+plt.show()
+
+sns.pairplot(data_scaled_df, diag_kind='kde', kind='scatter')
+plt.suptitle('Pairwise Relationships Between Standardized Features', y=1.02)
+plt.show()
+
+distances= euclidean_distances(data_scaled_df)
+distance_df=pd.DataFrame(distances, index=data.index , columns = data.index)
+
+vehicle_index=0
+most_similar= distance_df.loc[vehicle_index].nsmallest(6)[1:]
+print(f"5 Most similar vehicles to vehicle {vehicle_index}:")
+print(most_similar)
+
+features_with_info=['MODEL','YEAR','ENGINE SIZE','CYLINDERS','FUEL CONSUMPTIONS','COMB(L/100 km)','EMISSIONS']
+first_vehicle_data = data.iloc[0][features_with_info]
+print("Data for the First Vehicle (Vehicle 0):")
+print(first_vehicle_data)
+
+
+most_similar_indices = most_similar.index
+similar_vehicles_data = data.iloc[most_similar_indices][features_with_info]
+print("\nData for the Most Similar Vehicles:")
+print(similar_vehicles_data)
+
+print("\nFeature-wise Mean and Standard Deviation After Standardization:")
+print(data_scaled_df.describe().loc[['mean', 'std']])
+
+LAB 3
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+data = pd.read_csv('house-prices.csv')
+
+data.head()
+
+print("Dataset Information:\n")
+data.info()
+print("\nBasic Statistics:\n")
+print(data.describe().T)
+
+print("\nCategorical Data Summary:\n")
+print(data[['Brick', 'Neighborhood']].describe())
+
+Q1 = data['Price'].quantile(0.25)
+Q3 = data['Price'].quantile(0.75)
+IQR = Q3 - Q1
+print("\nInterquartile Range (IQR) for Price:\n")
+print(f"Q1 (25th percentile): {Q1}")
+print(f"Q3 (75th percentile): {Q3}")
+print(f"IQR: {IQR}")
+
+plt.subplot(1,3,3)
+sns.boxplot(x=data['Price'], color='orange')
+plt.axvline(Q1, color='red', linestyle ='--', label='Q1 (25th)')
+plt.axvline(Q3, color='blue', linestyle ='--', label='Q3 (75th)')
+plt.title('Interquartile Range (IQR)')
+plt.xlabel('Price')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+price_skewness=data['Price'].skew()
+price_kurtosis = data['Price'].kurtosis()
+print("\nSkewness and Kurtosis for Price:\n")
+print(f"Skewness of Price: {price_skewness}")
+print(f"Kurtosis of Price: {price_kurtosis}")
+
+plt.figure(figsize=(12,6))
+plt.subplot(1, 2, 1)
+sns.histplot(data['Price'], kde=True, bins=20, color='purple')
+plt.axvline(data['Price'].mean(), color='red', linestyle='--', label='Mean')
+plt.axvline(data['Price'].median(), color='blue', linestyle='-', label='Median')
+plt.title(f'Skewness: {price_skewness:.2f}')
+plt.xlabel('Price')
+plt.ylabel('Frequency')
+plt.legend()
+
+plt.subplot(1, 2, 2)
+sns.kdeplot(data['Price'], color='green', fill=True)
+plt.title(f'Kurtosis: {price_kurtosis:.2f}')
+plt.xlabel('Price')
+plt.ylabel('Density')
+plt.tight_layout()
+
+sns.set(style="whitegrid")
+
+plt.figure(figsize=(8, 5))
+sns.histplot(data['Price'], kde=True, bins=20, color='blue')
+plt.title('Distribution of House Prices')
+plt.xlabel('Price')
+plt.ylabel('Frequency')
+plt.show()
+
+plt.figure(figsize=(8, 5))
+sns.scatterplot(x='SqFt', y='Price', data=data, hue='Neighborhood', palette='Set3')
+plt.title('House Price vs. Square Footage')
+plt.xlabel('Square Footage')
+plt.ylabel('Price')
+plt.legend(title='Neighborhood')
+plt.show()
+
+plt.figure(figsize=(8, 5))
+sns.boxplot(x='Neighborhood', y='Price', data=data, palette='Set3')
+plt.title('House Prices by Neighborhood')
+plt.xlabel('Neighborhood')
+plt.ylabel('Price')
+plt.show()
+
+plt.figure(figsize=(6, 4))
+sns.countplot(x='Brick', data=data, palette='coolwarm')
+plt.title('Count of Brick vs Non-Brick Houses')
+plt.xlabel('Brick')
+plt.ylabel('Count')
+plt.show()
+
+sns.pairplot(data[['Price', 'SqFt', 'Bedrooms', 'Bathrooms', 'Offers']], kind='s
+plt.suptitle('Pairplot of Numerical Variables', y=1.02)
+plt.show()
+
+plt.figure(figsize=(8, 5))
+sns.boxplot(x='Bedrooms', y='Price', data=data, palette='viridis')
+plt.title('House Prices by Number of Bedrooms')
+plt.xlabel('Number of Bedrooms')
+plt.ylabel('Price')
+plt.show()
+
+if 'Bricks' in data.columns:
+ plt.figure(figsize=(8, 5))
+ sns.boxplot(x='Bricks', y='Price', data=data, palette='coolwarm')
+ plt.title('Comparison of Price by Bricks Feature')
+ plt.xlabel('Bricks')
+ plt.ylabel('Price')
+ plt.show()
+else:
+ print("The 'Bricks' feature is not present in the dataset.")
+
+plt.figure(figsize=(8,6))
+sns.boxplot(data=data, x='Brick', y='Price', palette='Set2')
+
+plt.title('Price Comparison for "Yes" and "No" in Brick Feature')
+plt.xlabel('Brick Feature')
+plt.ylabel('Price')
+plt.show()
+
+plt.figure(figsize=(8,6))
+sns.barplot(data=data, x='Brick', y='Price', hue='Brick', palette='Set2')
+plt.title('Average Price Comparison for "Yes" and "No" in Brick Feature', fontsize=14)
+plt.xlabel('Brick Feature', fontsize=12)
+plt.ylabel('Average Price', fontsize=12)
+plt.show()
+
+plt.figure(figsize=(8,6))
+sns.stripplot(data=data, x='Brick', y='Price', hue='Brick', palette='Set2', jitt
+
+plt.title('Price Distribution for "Yes" and "No" in Brick Feature', fontsize=14)
+plt.xlabel('Brick Feature', fontsize=12)
+plt.ylabel('Price', fontsize=12)
+
+plt.show()
+
+
+LAB 4
+
+from mlxtend.frequent_patterns import apriori, association_rules, fpgrowth
+from mlxtend.preprocessing import TransactionEncoder
+import pandas as pd
+
+dataset = [
+['I1', 'I2', 'I5'],
+['I2', 'I4'],
+['I2', 'I3'],
+['I1', 'I2', 'I4'],
+['I1', 'I3'],
+['I2', 'I3'],
+['I1', 'I3'],
+['I1', 'I2', 'I3', 'I5'],
+['I1', 'I2', 'I3']
+]
+
+te = TransactionEncoder()
+transformed_data = te.fit(dataset).transform(dataset)
+df = pd.DataFrame(transformed_data, columns=te.columns_)
+
+print("One-hot encoded DataFrame:")
+print(df)
+
+frequent_itemsets_apriori = apriori(df, min_support=0.2, use_colnames=True)
+print("Frequent Itemsets using Apriori:")
+print(frequent_itemsets_apriori)
+
+rules_apriori = association_rules(frequent_itemsets_apriori, metric='lift', min_threshold=1.0)
+print("\nAssociation Rules using Apriori:")
+print(rules_apriori)
+
+frequent_itemsets_fpgrowth = fpgrowth(df, min_support=0.2, use_colnames=True)
+print("\nFrequent Itemsets using FP-Growth:")
+print(frequent_itemsets_fpgrowth)
+
+rules_fpgrowth = association_rules(frequent_itemsets_fpgrowth, metric='lift', min_threshold=1.0)
+print("\nAssociation Rules using FP-Growth:")
+print(rules_fpgrowth)
+
+item_counts = df.sum().sort_values(ascending=False)
+most_frequent_item = item_counts.idxmax()
+print(f"Most frequently bought item: {most_frequent_item}")
+
+frequent_combinations = frequent_itemsets_apriori[frequent_itemsets_apriori['itemsets'].apply
+(lambda x: most_frequent_item in x)]
+print("\nFrequent Itemsets containing the most frequent item:")
+print(frequent_combinations)
+
+import matplotlib.pyplot as plt
+plt.figure(figsize=(10,5))
+plt.bar(frequent_itemsets_apriori['itemsets'].apply(lambda x: ', '.join(x)), frequent_itemsets_apriori['support'],
+color='skyblue')
+plt.xticks(rotation=45, ha='right')
+plt.xlabel("Itemsets")
+plt.ylabel("Support")
+plt.title("Frequent Itemsets and Their Support Values")
+plt.show()
+
+
+LAB 5
+
+import pandas as pd
+import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder,StandardScaler
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("train - train_titanic.csv")
+
+df.sample(4)
+
+df.shape
+
+df.info()
+
+df.columns
+
+
+**Handling Missing Values
+
+
+print(df.isnull().sum())
+
+plt.figure(figsize=(10,6))
+sns.heatmap(df.isnull(), cmap="viridis", cbar=False, yticklabels=False)
+plt.title("Missing Values in the Dataset")
+plt.show()
+
+import missingno as msno
+msno.bar(df)
+plt.show()
+
+np.mean(df['Age'])
+
+
+**Numerical Columns (Using Mean Imputation)
+
+
+age_imputer = SimpleImputer(strategy="mean")
+df["Age"] = age_imputer.fit_transform(df[["Age"]])
+df["Age"] = df["Age"].round().astype(int)
+
+print(df.isnull().sum())**Categorical Columns (Using Most Frequent Imputation)
+
+
+embarked_counts = df["Embarked"].value_counts()
+print(embarked_counts)
+
+
+embarked_imputer = SimpleImputer(strategy="most_frequent")
+df["Embarked"] = embarked_imputer.fit_transform(df[["Embarked"]]).ravel()
+
+embarked_counts = df["Embarked"].value_counts()
+print(embarked_counts)
+
+df.drop(columns=["cabin"], inplace=True)
+
+print(df.isnull().sum())
+
+df.shape
+**Encoded Categorical Variables
+
+
+label_encoder = LabelEncoder()
+df["Sex"] = label_encoder.fit_transform(df["Sex"])
+
+df.sample()
+
+df = pd.get_dummies(df, columns=["Embarked"], drop_first=False)
+
+df.sample()
+
+df[["Embarked_C","Embarked_Q", "Embarked_S"]] = df[["Embarked_C","Embarked_Q", "Embarked_S"]].astype(int)
+
+df.sample()
+
+
+**Remove Irrelavent Features
+
+
+df.drop(columns=["Name", "Ticket","Fare"], inplace=True)
+
+df.sample()
+
+correlation_matrix = df.corr()
+print(correlation_matrix)
+plt.figure(figsize=(10, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
+plt.title("Feature Correlation Heatmap")
+plt.show()
+
+df.columns
+
+
+**Feature Engineerning
+
+
+df["FamilySize"] = df["SibSp"] + df["Parch"] + 1 # +1 to include the passenger themselves
+df.drop(columns=["SibSp", "Parch"], inplace=True)
+print(df.head())
+
+df.columns
+
+df.head()
+
+
+**Feature Scaling
+
+numerical_features = ["Age", "FamilySize"]
+scaler = StandardScaler()
+df[numerical_features] = scaler.fit_transform(df[numerical_features])
+print(df.head())
